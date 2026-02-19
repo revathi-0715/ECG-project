@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI-Based ECG Arrhythmia Detection System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #e3f2fd, #f8fbff);
+    color: #333;
+}
+
+/* HEADER */
+header {
+    background: linear-gradient(90deg, #0d47a1, #1976d2);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 30px;
+}
+
+header p {
+    margin-top: 8px;
+    font-size: 15px;
+    opacity: 0.95;
+}
+
+/* MAIN CONTAINER */
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    background: white;
+    padding: 35px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* IMAGE */
+.image-section {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.image-section img {
+    width: 60%;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* DESCRIPTION */
+.description {
+    margin-top: 20px;
+    font-size: 15px;
+    line-height: 1.7;
+    text-align: justify;
+    background: #f4f9ff;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #1976d2;
+}
+
+/* UPLOAD SECTION */
+.upload-box {
+    margin-top: 35px;
+    text-align: center;
+    padding: 25px;
+    background: #eef6ff;
+    border-radius: 12px;
+    border: 2px dashed #1976d2;
+}
+
+input[type="file"] {
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+button {
+    background: linear-gradient(90deg, #1976d2, #0d47a1);
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(25,118,210,0.3);
+}
+
+/* RESULT */
+.result-card {
+    margin-top: 30px;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 18px;
+}
+
+.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 2px solid #a5d6a7;
+}
+
+.error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 2px solid #ef9a9a;
+}
+
+/* SCALOGRAM SECTION */
+.scalogram-section {
+    margin-top: 30px;
+    text-align: center;
+    background: #f4f9ff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #bbdefb;
+}
+
+.scalogram-section h3 {
+    color: #0d47a1;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.scalogram-section img {
+    max-width: 90%;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.scalogram-caption {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #555;
+    font-style: italic;
+}
+
+/* HEARTBEAT TYPES */
+.heartbeat-types {
+    margin-top: 40px;
+}
+
+.heartbeat-types h2 {
+    text-align: center;
+    color: #0d47a1;
+    margin-bottom: 20px;
+}
+
+.type-card {
+    background: #f8fbff;
+    padding: 18px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    border-left: 6px solid #1976d2;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.type-card h4 {
+    margin: 0 0 8px 0;
+    color: #0d47a1;
+}
+
+/* FOOTER */
+footer {
+    text-align: center;
+    padding: 18px;
+    font-size: 13px;
+    color: #666;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>AI-Based ECG Arrhythmia Detection System</h1>
+    <p>Deep Learning (2-D CNN) Powered Intelligent Cardiac Monitoring Platform</p>
+</header>
+
+<div class="container">
+
+    <!-- BANNER IMAGE -->
+    <div class="image-section">
+        <img src="{{ url_for('static', filename='heartbeat.jfif') }}" alt="ECG Heartbeat">
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="description">
+        The AI-Based ECG Arrhythmia Detection System analyzes electrocardiogram signals 
+        using two-dimensional convolutional neural networks (2-D CNN). The system 
+        transforms ECG signals into image-based scalogram representations using wavelet 
+        transforms, enabling robust spatial feature extraction and accurate classification 
+        of heart rhythm abnormalities. This intelligent solution supports early diagnosis 
+        and real-time cardiac monitoring.
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="upload-box">
+        <h2>Upload ECG File (.dat / .hea / .qrs)</h2>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".dat,.hea,.qrs" required><br>
+            <button type="submit">&#9654; Analyze ECG</button>
+        </form>
+    </div>
+
+    <!-- PREDICTION RESULT -->
+    {% if prediction %}
+        <div class="result-card success">
+            &#10003; Predicted Arrhythmia Class: {{ prediction }}
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="result-card error">
+            &#9888; Error: {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- SCALOGRAM DISPLAY -->
+    {% if scalogram_image %}
+        <div class="scalogram-section">
+            <h3>&#128200; Generated ECG Scalogram</h3>
+            <img src="{{ url_for('static', filename=scalogram_image) }}" alt="ECG Scalogram">
+            <p class="scalogram-caption">
+                Continuous Wavelet Transform (CWT) scalogram of the representative beat
+                used for classification. Color intensity represents wavelet coefficient magnitude.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- HEARTBEAT TYPES -->
+    <div class="heartbeat-types">
+        <h2>Classified Heartbeat Types</h2>
+
+        <div class="type-card">
+            <h4>Normal (N) &mdash; Normal Sinus Rhythm</h4>
+            A normal heartbeat follows a regular and consistent rhythm. The electrical signals travel properly through the heart producing standard P, QRS, and T waves. The heart rate usually ranges between 60&ndash;100 beats per minute. Blood circulates efficiently throughout the body. This indicates healthy heart functioning.
+        </div>
+
+        <div class="type-card">
+            <h4>LBBB &mdash; Left Bundle Branch Block</h4>
+            LBBB occurs when the electrical signal is delayed in the left side of the heart. This causes the left ventricle to contract later than normal. On ECG, it appears as a widened QRS complex. It may indicate underlying heart disease. Medical evaluation is recommended if detected.
+        </div>
+
+        <div class="type-card">
+            <h4>RBBB &mdash; Right Bundle Branch Block</h4>
+            RBBB happens when the electrical impulse is delayed in the right ventricle. This leads to slight changes in ECG waveform patterns. Some individuals may not experience symptoms. However, it can sometimes be linked to heart or lung conditions. Clinical assessment helps determine severity.
+        </div>
+
+        <div class="type-card">
+            <h4>APC &mdash; Atrial Premature Contraction</h4>
+            APC is an early heartbeat originating from the atria. It may feel like a skipped or extra beat. These are common and often harmless. Occasional APCs usually require no treatment. Frequent occurrences should be medically reviewed.
+        </div>
+
+        <div class="type-card">
+            <h4>PVC &mdash; Premature Ventricular Contraction</h4>
+            PVC is an early heartbeat arising from the ventricles. It creates a wider and abnormal QRS pattern on ECG. Some people feel a strong or extra heartbeat sensation. Occasional PVCs are common. Frequent PVCs may require cardiac evaluation.
+        </div>
+
+    </div>
+
+</div>
+
+<footer>
+    &copy; 2026 ECG Arrhythmia Detection using 2-D CNN | Intelligent Healthcare Monitoring System
+</footer>
+
+</body>
+</html>
