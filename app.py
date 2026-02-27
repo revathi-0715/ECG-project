@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from src.predict import predict_record
 
 DATASET_DIR = "data/mitdb/x_mitdb"
-MODEL_PATH = "models/ecg_cnn_model.h5"
+GDRIVE_FILE_ID = "1rjl9BSI8Pb3q8pUr_pUYYlmjCkYJ3CUP5"
 SCALOGRAM_SAVE_DIR = "static/scalograms"
 
 app = Flask(__name__)
@@ -30,7 +30,7 @@ def index():
         scalogram_save_path = os.path.join(SCALOGRAM_SAVE_DIR, scalogram_filename)
 
         try:
-            prediction = predict_record(MODEL_PATH, record_path, scalogram_save_path)
+            prediction = predict_record(GDRIVE_FILE_ID, record_path, scalogram_save_path)
             scalogram_image = f"scalograms/{scalogram_filename}"
         except FileNotFoundError as e:
             error = str(e)
