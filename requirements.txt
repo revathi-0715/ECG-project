@@ -8,3 +8,4 @@ gunicorn==22.0.0
 PyWavelets==1.6.0
 scipy==1.11.4
 scikit-image==0.21.0
+h5py==3.10.0
