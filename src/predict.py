@@ -1,50 +1,71 @@
 import os
+import json
 import wfdb
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow.keras.models import load_model
 from src.scalogram_generator import generate_scalogram
 
 CLASSES = ["Normal", "LBBB", "RBBB", "PVC", "APC"]
 
 
 def load_model_safe(model_path):
-    """Load model with fallback for version compatibility issues."""
+    """Load model with full compatibility fix for batch_shape error."""
+    import tensorflow as tf
+    from tensorflow.keras.models import model_from_json
+    import h5py
+
+    # ── Patch 1: monkey-patch InputLayer to accept batch_shape ──────────────
+    original_init = tf.keras.layers.InputLayer.__init__
+
+    def patched_init(self, **kwargs):
+        if 'batch_shape' in kwargs:
+            batch_shape = kwargs.pop('batch_shape')
+            kwargs['input_shape'] = batch_shape[1:]
+        original_init(self, **kwargs)
+
+    tf.keras.layers.InputLayer.__init__ = patched_init
+    # ────────────────────────────────────────────────────────────────────────
+
     try:
-        # First try: standard load
-        model = load_model(model_path)
+        model = tf.keras.models.load_model(model_path, compile=False)
         return model
     except Exception:
         pass
 
+    # ── Patch 2: rebuild model from config stored inside .h5 ────────────────
     try:
-        # Second try: compile=False skips optimizer config issues
-        model = load_model(model_path, compile=False)
-        return model
-    except Exception:
-        pass
+        with h5py.File(model_path, 'r') as f:
+            # Get model config from h5 file
+            model_config = f.attrs.get('model_config')
+            if isinstance(model_config, bytes):
+                model_config = model_config.decode('utf-8')
 
-    try:
-        # Third try: custom_objects to fix batch_shape issue
-        from tensorflow.keras.layers import InputLayer
+            config = json.loads(model_config)
 
-        class CompatInputLayer(InputLayer):
-            def __init__(self, **kwargs):
-                if 'batch_shape' in kwargs:
-                    kwargs['input_shape'] = kwargs.pop('batch_shape')[1:]
-                super().__init__(**kwargs)
+            # Recursively fix batch_shape → input_shape in config
+            def fix_config(obj):
+                if isinstance(obj, dict):
+                    if 'batch_shape' in obj:
+                        obj['input_shape'] = obj.pop('batch_shape')[1:]
+                    for v in obj.values():
+                        fix_config(v)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        fix_config(item)
 
-        model = load_model(
-            model_path,
-            compile=False,
-            custom_objects={'InputLayer': CompatInputLayer}
-        )
-        return model
+            fix_config(config)
+
+            # Rebuild model from fixed config
+            model = tf.keras.models.model_from_json(json.dumps(config))
+
+            # Load weights
+            model.load_weights(model_path)
+            return model
+
     except Exception as e:
-        raise RuntimeError(f"Failed to load model: {str(e)}")
+        raise RuntimeError(f"All model loading methods failed: {str(e)}")
 
 
 def load_record_for_prediction(record_path):
@@ -80,7 +101,10 @@ def save_scalogram_image(scalogram, save_path, predicted_class):
     """Save the scalogram of the representative beat as a PNG image."""
     fig, ax = plt.subplots(figsize=(6, 4))
     im = ax.imshow(scalogram, aspect="auto", cmap="jet", origin="lower")
-    ax.set_title(f"ECG Scalogram — Predicted: {predicted_class}", fontsize=13, fontweight="bold")
+    ax.set_title(
+        f"ECG Scalogram — Predicted: {predicted_class}",
+        fontsize=13, fontweight="bold"
+    )
     ax.set_xlabel("Time")
     ax.set_ylabel("Scale / Frequency")
     plt.colorbar(im, ax=ax, label="Magnitude")
@@ -90,9 +114,7 @@ def save_scalogram_image(scalogram, save_path, predicted_class):
 
 
 def predict_record(model_path, record_path, scalogram_save_path=None):
-    """
-    Predict arrhythmia class for an ECG record.
-    """
+    """Predict arrhythmia class for an ECG record."""
     model = load_model_safe(model_path)
     beats = load_record_for_prediction(record_path)
 
