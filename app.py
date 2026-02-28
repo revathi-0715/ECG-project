@@ -1,29 +1,13 @@
 import os
 import uuid
-import gdown
 from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
 from src.predict import predict_record
 
-DATASET_DIR = "data/mitdb/x_mitdb"
+# Model is already in the repo — no download needed
 MODEL_PATH = "heartbeat_classifier.h5"
+DATASET_DIR = "data/mitdb/x_mitdb"
 SCALOGRAM_SAVE_DIR = "static/scalograms"
-
-# ── Auto-download model from Google Drive if not present ──────────────────────
-GDRIVE_FILE_ID = "1rjl9BSI8Pb3q8pUr_pUYYlmjCkYJ3CUP"  # <-- Replace this with your file ID
-
-def download_model():
-    if not os.path.exists(MODEL_PATH):
-        print("Model not found locally. Downloading from Google Drive...")
-        os.makedirs("models", exist_ok=True)
-        url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
-        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
-        print("Model downloaded successfully.")
-    else:
-        print("Model already exists. Skipping download.")
-
-download_model()
-# ─────────────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
 os.makedirs(SCALOGRAM_SAVE_DIR, exist_ok=True)
